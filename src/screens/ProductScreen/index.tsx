@@ -1,4 +1,4 @@
-import {useEffect, useContext} from 'react';
+import {useEffect, useContext, useState} from 'react';
 
 import {
   StyleSheet,
@@ -10,9 +10,9 @@ import {
   Image,
 } from 'react-native';
 
-import {Picker} from '@react-native-picker/picker';
-
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {StackScreenProps} from '@react-navigation/stack';
+import {Picker} from '@react-native-picker/picker';
 
 import {ProductsStackParams} from '../../Navigator/ProductsNavigator';
 
@@ -27,9 +27,11 @@ interface Props
 export const ProductScreen = ({navigation, route}: Props) => {
   const {id = '', name = ''} = route.params;
 
+  const [tempUri, setTempUri] = useState<string>('');
+
   const {categories} = useCategories();
 
-  const {loadProductById, addProducts, updateProducts} =
+  const {loadProductById, addProducts, updateProducts, uploadImage} =
     useContext(ProductContext);
 
   const {_id, categoriaId, nombre, img, form, onChange, setFormValue} = useForm(
@@ -72,6 +74,24 @@ export const ProductScreen = ({navigation, route}: Props) => {
     }
   };
 
+  const takePhoto = () => {
+    launchCamera({mediaType: 'photo', quality: 0.5}, resp => {
+      if (resp.assets.uri) return;
+      if (!resp.assets.uri) return;
+      setTempUri(resp.assets.uri);
+      uploadImage(resp, _id);
+    });
+  };
+
+  const takePhotoFromGallery = () => {
+    launchImageLibrary({mediaType: 'photo', quality: 0.5}, resp => {
+      if (resp.assets.uri) return;
+      if (!resp.assets.uri) return;
+      setTempUri(resp.assets.uri);
+      uploadImage(resp, _id);
+    });
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView>
@@ -95,21 +115,31 @@ export const ProductScreen = ({navigation, route}: Props) => {
         />
         <Text style={styles.label}>Categoría:</Text>
         <Button title="Guardar" onPress={saveOrUpdate} color="#5856D6" />
-        {_id.length > 0 && (
+        {_id.length > 0 && !tempUri && (
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'center',
               marginTop: 10,
             }}>
-            <Button title="Cámara" onPress={() => {}} color="#5856D6" />
+            <Button title="Cámara" onPress={takePhoto} color="#5856D6" />
             <View style={{width: 10}} />
-            <Button title="Galería" onPress={() => {}} color="#5856D6" />
+            <Button
+              title="Galería"
+              onPress={takePhotoFromGallery}
+              color="#5856D6"
+            />
           </View>
         )}
         {id.length > 0 && (
           <Image
             source={{uri: img}}
+            style={{marginTop: 20, width: '100%', height: 300}}
+          />
+        )}
+        {tempUri && (
+          <Image
+            source={{uri: tempUri}}
             style={{marginTop: 20, width: '100%', height: 300}}
           />
         )}

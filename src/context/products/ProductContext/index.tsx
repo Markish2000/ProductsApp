@@ -3,6 +3,7 @@ import {createContext, useEffect, useState} from 'react';
 import {Producto, ProductsResponse} from '../../../interfaces/products';
 
 import instance from '../../../api/cafeApi';
+import {ImagePickerResponse} from 'react-native-image-picker';
 
 type ProductsContextProps = {
   products: Producto[];
@@ -67,7 +68,21 @@ export const ProductsProvider = ({children}: any) => {
     return resp.data;
   };
 
-  const uploadImage = async (data: any, id: string) => {};
+  const uploadImage = async (data: ImagePickerResponse, id: string) => {
+    const fileToUpload = {
+      uri: data.assets.uri,
+      type: data.assets.type,
+      name: data.assets.fileName,
+    };
+
+    const formData = new FormData();
+    formData.append('archivo', fileToUpload);
+    try {
+      const resp = await instance.put(`/uploads/productos/${id}`, formData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <ProductContext.Provider
